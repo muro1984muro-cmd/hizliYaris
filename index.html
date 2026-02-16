@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Hızlı Yarış - Kolay Engeller</title>
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        background: black;
+        font-family: Arial;
+    }
+    canvas {
+        display: block;
+        margin: auto;
+        background: #222;
+        border: 2px solid #fff;
+    }
+    #restartBtn {
+        display: none;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        padding: 15px 30px;
+        font-size: 24px;
+        background: yellow;
+        border: none;
+        cursor: pointer;
+        border-radius: 10px;
+    }
+</style>
+</head>
+<body>
+
+<canvas id="gameCanvas" width="400" height="600"></canvas>
+<button id="restartBtn">Tekrar Başlat</button>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+const restartBtn = document.getElementById("restartBtn");
+
+let car = { x: 180, y: 500, width: 40, height: 70, speed: 8 };
+let obstacles = [];
+let score = 0;
+let gameOver = false;
+let roadLineY = 0;
+let gameSpeed = 5; // 🔹 engeller daha yavaş
+let obstacleFrequency = 0.03; // 🔹 daha az engel
+
+document.addEventListener("keydown", moveCar);
+
+function moveCar(e) {
+    if (e.key === "ArrowLeft" && car.x > 0) {
+        car.x -= car.speed;
+        if (car.x < 0) car.x = 0;
+    }
+    if (e.key === "ArrowRight" && car.x + car.width < canvas.width) {
+        car.x += car.speed;
+        if (car.x + car.width > canvas.width) car.x = canvas.width - car.width;
+    }
+}
+
+function createObstacle() {
+    let width = 40 + Math.random() * 30;
+    let x = Math.random() * (canvas.width - width);
+    obstacles.push({ x: x, y: -70, width: width, height: 70 });
+}
+
+function drawRoad() {
+    ctx.fillStyle = "white";
+    for (let i = 0; i < 600; i += 100) {
+        ctx.fillRect(195, i + roadLineY, 10, 50);
+    }
+    roadLineY += gameSpeed;
+    if (roadLineY > 100) roadLineY = 0;
+}
+
+function drawCar() {
+    ctx.fillStyle = "red";
+    ctx.fillRect(car.x, car.y, car.width, car.height);
+}
+
+function drawObstacles() {
+    ctx.fillStyle = "white";
+    obstacles.forEach((obs, index) => {
+        obs.y += gameSpeed;
+        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+
+        if (
+            car.x < obs.x + obs.width &&
+            car.x + car.width > obs.x &&
+            car.y < obs.y + obs.height &&
+            car.y + car.height > obs.y
+        ) {
+            gameOver = true;
+            restartBtn.style.display = "block";
+        }
+
+        if (obs.y > canvas.height) {
+            obstacles.splice(index, 1);
+            score++;
+        }
+    });
+}
+
+function drawScore() {
+    ctx.fillStyle = "yellow";
+    ctx.font = "20px Arial";
+    ctx.fillText("Skor: " + score, 10, 30);
+}
+
+function update() {
+    if (gameOver) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (Math.random() < obstacleFrequency) createObstacle();
+
+    drawRoad();
+    drawCar();
+    drawObstacles();
+    drawScore();
+
+    requestAnimationFrame(update);
+}
+
+restartBtn.onclick = function() {
+    car = { x: 180, y: 500, width: 40, height: 70, speed: 8 };
+    obstacles = [];
+    score = 0;
+    gameOver = false;
+    restartBtn.style.display = "none";
+    update();
+};
+
+update();
+</script>
+
+</body>
+</html>
